@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% csrf_token %}
+<a href="{% url 'federated_learning:round_list' %}" class="btn btn-outline-secondary mb-3">&larr; Back</a>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">FL Round {{ round.round_number }}</h2>
+  <div>
+    <button class="btn btn-outline-primary me-2" onclick="location.reload()">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+    {% if user.is_superuser or user.user_type == 'admin' %}
+      {% if round.status == 'pending' %}
+        <button class="btn btn-success" onclick="transitionStatus('in_progress')">
+          <i class="bi bi-play-circle"></i> Start Round
+        </button>
+      {% elif round.status == 'in_progress' %}
+        <button class="btn btn-warning me-2" onclick="window.location='{% url 'federated_learning:simulate_round' round.round_id %}'">
+          <i class="bi bi-lightning"></i> Simulate Updates
+        </button>
+        <button class="btn btn-success" onclick="window.location='{% url 'federated_learning:aggregate_round' round.round_id %}'">
+          <i class="bi bi-check-circle"></i> Complete / Aggregate
+        </button>
+      {% elif round.status == 'completed' %}
+        <span class="badge bg-success" style="font-size: 1rem;"><i class="bi bi-check-circle"></i> Completed</span>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card border-primary shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">{{ round.status|title }}</h5>
+        <p class="text-muted">Current Status</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-success shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">{{ round.current_participants }}</h5>
+        <p class="text-muted">Participants</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-info shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">
+          {% if round.global_model_accuracy %}{{ round.global_model_accuracy|floatformat:2 }}%{% else %}-{% endif %}
+        </h5>
+        <p class="text-muted">Global Acc</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card border-warning shadow-sm">
+      <div class="card-body text-center">
+        <h5 class="card-title">
+          {% if round.global_model_loss %}{{ round.global_model_loss|floatformat:4 }}{% else %}-{% endif %}
+        </h5>
+        <p class="text-muted">Global Loss</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Model Updates (<span id="update-count">{{ total_updates }}</span>)</h5>
+    <small class="text-muted">Latest updates first</small>
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+    <table class="table table-hover table-sm">
+      <thead>
+        <tr><th>Device</th><th>Acc</th><th>Loss</th><th>Grad Norm</th><th>Samples</th><th>Malicious</th><th>Time</th></tr>
+      </thead>
+      <tbody id="updates-table-body">
+        {% for u in updates %}
+        <tr>
+          <td><strong>{{ u.device.device_name }}</strong></td>
+          <td>{{ u.local_accuracy|floatformat:2 }}%</td>
+          <td>{{ u.local_loss|floatformat:4 }}</td>
+          <td>{{ u.gradient_norm|floatformat:4 }}</td>
+          <td>{{ u.training_samples }}</td>
+          <td>
+            {% if u.is_malicious %}
+            <span class="badge bg-danger">Yes</span>
+            {% else %}
+            <span class="badge bg-success">No</span>
+            {% endif %}
+          </td>
+          <td><small>{{ u.uploaded_at|timesince }} ago</small></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">
+          <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.25;"></i>
+          <p class="mt-2 mb-0">No updates yet</p>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  
+  <!-- Pagination for updates -->
+  {% if has_update_pages %}
+  <div class="card-footer bg-light">
+    <nav aria-label="Updates pagination">
+      <ul class="pagination justify-content-center mb-0" style="font-size: 0.9rem;">
+        {% if updates.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?updates_page=1"><i class="bi bi-skip-backward"></i></a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?updates_page={{ updates.previous_page_number }}">Prev</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link"><i class="bi bi-skip-backward"></i></span>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link">Prev</span>
+        </li>
+        {% endif %}
+        
+        {% for num in updates.paginator.page_range %}
+          {% if updates.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+          </li>
+          {% elif num > updates.number|add:'-2' and num < updates.number|add:'2' %}
+          <li class="page-item">
+            <a class="page-link" href="?updates_page={{ num }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        
+        {% if updates.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?updates_page={{ updates.next_page_number }}">Next</a>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?updates_page={{ updates.paginator.num_pages }}"><i class="bi bi-skip-forward"></i></a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+        <li class="page-item disabled">
+          <span class="page-link"><i class="bi bi-skip-forward"></i></span>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    <p class="text-center text-muted mb-0" style="font-size: 0.85rem;">
+      Showing <strong>{{ updates.start_index }}</strong>-<strong>{{ updates.end_index }}</strong> of <strong>{{ total_updates }}</strong>
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh updates every 5 seconds
+const ROUND_ID = "{{ round.round_id }}";
+const API_URL = "{% url 'federated_learning:api_round_updates' round.round_id %}";
+
+function refreshUpdateCount() {
+  fetch(API_URL + '?limit=1&offset=0')
+    .then(response => response.json())
+    .then(data => {
+      const countEl = document.getElementById('update-count');
+      const newCount = data.total;
+      if (countEl && countEl.textContent !== newCount.toString()) {
+        countEl.textContent = newCount;
+        // Highlight the change
+        countEl.parentElement.classList.add('live-highlight');
+        setTimeout(() => countEl.parentElement.classList.remove('live-highlight'), 2000);
+      }
+    })
+    .catch(err => console.error('Failed to refresh updates:', err));
+}
+
+function transitionStatus(newStatus) {
+  if (!confirm(`Transition round to ${newStatus}?`)) {
+    return;
+  }
+  
+  const statusUrl = `/federated-learning/api/rounds/${ROUND_ID}/status/`;
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  
+  fetch(statusUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken || '',
+    },
+    body: JSON.stringify({ status: newStatus })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Error: ' + (data.error || 'Unknown error'));
+      }
+    })
+    .catch(err => alert('Failed to transition: ' + err));
+}
+
+// Refresh every 5 seconds
+setInterval(refreshUpdateCount, 5000);
+
+// Initial refresh after 1 second
+setTimeout(refreshUpdateCount, 1000);
+
+// Style for highlight
+const style = document.createElement('style');
+style.textContent = `
+  .live-highlight {
+    animation: highlightPulse 0.6s ease;
+  }
+  @keyframes highlightPulse {
+    0%, 100% { background-color: transparent; }
+    50% { background-color: #fff3cd; }
+  }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

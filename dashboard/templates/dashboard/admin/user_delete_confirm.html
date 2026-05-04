@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mt-5">
+  <div class="col-md-6 offset-md-3">
+    <div class="card shadow border-danger">
+      <div class="card-header bg-danger text-white">
+        <h4 class="mb-0"><i class="bi bi-exclamation-triangle"></i> Confirm User Deactivation</h4>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warning">
+          <strong>Warning!</strong> You are about to deactivate this user account.
+        </div>
+
+        <h5>User Details:</h5>
+        <table class="table table-bordered">
+          <tr>
+            <th width="40%">Username:</th>
+            <td><strong>{{ viewed_user.username }}</strong></td>
+          </tr>
+          <tr>
+            <th>Full Name:</th>
+            <td>{{ viewed_user.first_name }} {{ viewed_user.last_name }}</td>
+          </tr>
+          <tr>
+            <th>Email:</th>
+            <td>{{ viewed_user.email }}</td>
+          </tr>
+          <tr>
+            <th>User Type:</th>
+            <td>{{ viewed_user.get_user_type_display }}</td>
+          </tr>
+          <tr>
+            <th>Registered Devices:</th>
+            <td>{{ viewed_user.devices.count }}</td>
+          </tr>
+        </table>
+
+        <div class="alert alert-info">
+          <p class="mb-0">
+            <strong>Note:</strong> This action will deactivate the user account. 
+            The user will not be able to log in, but their data will be preserved. 
+            You can reactivate the account later if needed.
+          </p>
+        </div>
+
+        <form method="post" class="mt-4">
+          {% csrf_token %}
+          <div class="d-flex justify-content-between">
+            <a href="{% url 'dashboard:user_detail' viewed_user.id %}" class="btn btn-secondary">
+              <i class="bi bi-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-trash"></i> Confirm Deactivation
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

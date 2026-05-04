@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Register New IIoT Device</h4>
+      </div>
+      <div class="card-body">
+        <form method="post" class="needs-validation" novalidate>
+          {% csrf_token %}
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Device Name</label>
+              {{ form.device_name }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Device Type</label>
+              {{ form.device_type }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">IP Address</label>
+              {{ form.ip_address }}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Firmware Version</label>
+              {{ form.firmware_version }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Location</label>
+            {{ form.location }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+          </div>
+          <button type="submit" class="btn btn-primary">Register Device</button>
+          <a href="{% url 'accounts:device_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

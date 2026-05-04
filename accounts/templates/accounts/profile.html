@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2 class="mb-4">Profile</h2>
+<div class="row">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">{{ user.username }}</h5>
+        <p class="mb-1"><strong>Email:</strong> {{ user.email }}</p>
+        <p class="mb-1"><strong>User Type:</strong> {{ user.get_user_type_display }}</p>
+        <p class="mb-1"><strong>Organization:</strong> {{ user.organization|default:"-" }}</p>
+        <p class="mb-1"><strong>Phone:</strong> {{ user.phone_number|default:"-" }}</p>
+        <p class="mb-1"><strong>Joined:</strong> {{ user.date_joined|date:"Y-m-d H:i" }}</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h5 class="mb-0">All Devices</h5>
+      </div>
+      <div class="card-body">
+        <p>Total devices: {{ device_count }}, Active: {{ active_devices }}</p>
+        <a href="{% url 'accounts:device_list' %}" class="btn btn-primary btn-sm">Manage Devices</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

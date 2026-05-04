@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Admin Dashboard</h2>
+  <div class="btn-group">
+    <a href="{% url 'dashboard:sync_devices' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-arrow-repeat"></i> Sync All Devices
+    </a>
+    <button onclick="location.reload()" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+  <div class="col-md-3">
+    <div class="card text-bg-primary mb-3 shadow-sm stats-card">
+      <div class="card-body">
+        <h6 class="card-title">Total Users</h6>
+        <h3>{{ user_count }}</h3>
+        <small>{{ active_users }} active</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-info mb-3 shadow-sm stats-card">
+      <div class="card-body">
+        <h6 class="card-title">Total Devices</h6>
+        <h3>{{ device_count }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-success mb-3 shadow-sm stats-card">
+      <div class="card-body">
+        <h6 class="card-title">Active Devices</h6>
+        <h3>{{ active_devices }}</h3>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card text-bg-danger mb-3 shadow-sm stats-card">
+      <div class="card-body">
+        <h6 class="card-title">Blocked Devices</h6>
+        <h3>{{ blocked_devices }}</h3>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-3">
+  <div class="col-md-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-speedometer2"></i> Quick Actions</h5>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{% url 'dashboard:user_management' %}" class="btn btn-primary">
+            <i class="bi bi-people"></i> Manage Users
+          </a>
+          <a href="{% url 'accounts:device_list' %}" class="btn btn-info">
+            <i class="bi bi-cpu"></i> View All Devices
+          </a>
+          <a href="{% url 'blockchain:overview' %}" class="btn btn-success">
+            <i class="bi bi-link-45deg"></i> Blockchain Explorer
+          </a>
+          <a href="{% url 'security:overview' %}" class="btn btn-warning">
+            <i class="bi bi-shield-exclamation"></i> Security Logs
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Recent FL Rounds</h5>
+        <table class="table table-sm">
+          <thead><tr><th>Round</th><th>Status</th><th>Accuracy</th></tr></thead>
+          <tbody>
+          {% for r in rounds %}
+            <tr>
+              <td>{{ r.round_number }}</td>
+              <td>{{ r.status }}</td>
+              <td>{{ r.global_model_accuracy }}%</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">No rounds yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Recent Blockchain Blocks</h5>
+        <table class="table table-sm">
+          <thead><tr><th>#</th><th>Hash</th><th>Miner</th></tr></thead>
+          <tbody>
+          {% for b in blocks %}
+            <tr>
+              <td>{{ b.index }}</td>
+              <td>{{ b.hash|slice:":10" }}...</td>
+              <td>{{ b.miner_device.device_name|default:"N/A" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">No blocks yet.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Recent Attacks</h5>
+        <table class="table table-sm">
+          <thead><tr><th>Device</th><th>Type</th><th>Round</th></tr></thead>
+          <tbody>
+          {% for a in attacks %}
+            <tr>
+              <td>{{ a.device.device_name }}</td>
+              <td>{{ a.attack_type }}</td>
+              <td>{{ a.fl_round_number }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">No attacks logged.</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

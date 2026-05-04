@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>All Devices</h2>
+  <a href="{% url 'accounts:device_register' %}" class="btn btn-primary">
+    Register New Device
+  </a>
+</div>
+
+<div class="row">
+  {% for d in devices %}
+  <div class="col-md-6 col-lg-4 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">{{ d.device_name }}</h5>
+        <span class="badge bg-{% if d.status == 'active' %}success{% elif d.status == 'blocked' %}danger{% else %}secondary{% endif %}">
+          {{ d.status|title }}
+        </span>
+      </div>
+      <div class="card-body">
+        <p class="mb-1"><strong>Owner:</strong> {{ d.user.username }}</p>
+        <p class="mb-1"><strong>Type:</strong> {{ d.get_device_type_display }}</p>
+        <p class="mb-1"><strong>MAC:</strong> <code>{{ d.mac_address }}</code></p>
+        <p class="mb-1"><strong>IP:</strong> {{ d.ip_address|default:"N/A" }}</p>
+        <p class="mb-1"><strong>Reputation:</strong>
+          {% with rep=d.get_reputation_score %}
+          <span class="badge bg-{% if rep >= 0.7 %}success{% elif rep >= 0.5 %}warning{% else %}danger{% endif %}">
+            {{ rep|floatformat:2 }}
+          </span>
+          {% endwith %}
+        </p>
+        <p class="mb-1"><strong>Malicious:</strong>
+          {% if d.is_malicious %}
+          <span class="badge bg-danger">Yes</span>
+          {% else %}
+          <span class="badge bg-success">No</span>
+          {% endif %}
+        </p>
+      </div>
+      <div class="card-footer d-flex justify-content-between">
+        <a href="{% url 'accounts:device_detail' d.device_id %}" class="btn btn-outline-primary btn-sm">View</a>
+        <a href="{% url 'federated_learning:round_list' %}" class="btn btn-outline-success btn-sm">Join FL</a>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12">
+    <div class="alert alert-info">No devices registered yet. Click "Register New Device" to add one.</div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

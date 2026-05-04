@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Privacy Budgets Reset - {{ device.device_name }}</h2>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <p>Budgets have been reset.</p>
+    <a href="{% url 'privacy:device_detail' device.device_id %}" class="btn btn-primary">Back to Detail</a>
+  </div>
+</div>
+{% endblock %}

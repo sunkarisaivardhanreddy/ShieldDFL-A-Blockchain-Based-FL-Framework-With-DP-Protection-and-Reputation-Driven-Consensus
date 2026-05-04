@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-success text-white">
+        <h4 class="mb-0">Start New FL Round</h4>
+      </div>
+      <div class="card-body">
+        <p>Start a new federated learning round. Active devices will be able to participate.</p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success w-100">Start Round</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

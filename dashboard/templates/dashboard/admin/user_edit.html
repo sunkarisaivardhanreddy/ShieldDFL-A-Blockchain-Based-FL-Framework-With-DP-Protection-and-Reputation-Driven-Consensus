@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Edit User: {{ viewed_user.username }}</h2>
+  <div>
+    <a href="{% url 'dashboard:user_detail' viewed_user.id %}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Back
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-8 offset-md-2">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Edit User Information</h5>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+          
+          <!-- Basic Information -->
+          <h6 class="border-bottom pb-2 mb-3">Basic Information</h6>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="username" class="form-label">Username</label>
+              <input type="text" class="form-control" id="username" value="{{ viewed_user.username }}" disabled>
+              <small class="text-muted">Username cannot be changed</small>
+            </div>
+            <div class="col-md-6">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" name="email" 
+                     value="{{ viewed_user.email }}" required>
+            </div>
+          </div>
+
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="first_name" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="first_name" name="first_name" 
+                     value="{{ viewed_user.first_name }}">
+            </div>
+            <div class="col-md-6">
+              <label for="last_name" class="form-label">Last Name</label>
+              <input type="text" class="form-control" id="last_name" name="last_name" 
+                     value="{{ viewed_user.last_name }}">
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <h6 class="border-bottom pb-2 mb-3 mt-4">Contact Information</h6>
+          
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="phone_number" class="form-label">Phone Number</label>
+              <input type="text" class="form-control" id="phone_number" name="phone_number" 
+                     value="{{ viewed_user.phone_number|default:'' }}">
+            </div>
+            <div class="col-md-6">
+              <label for="organization" class="form-label">Organization</label>
+              <input type="text" class="form-control" id="organization" name="organization" 
+                     value="{{ viewed_user.organization|default:'' }}">
+            </div>
+          </div>
+
+          <!-- User Type and Permissions -->
+          <h6 class="border-bottom pb-2 mb-3 mt-4">User Type and Permissions</h6>
+          
+          <div class="mb-3">
+            <label for="user_type" class="form-label">User Type</label>
+            <select class="form-select" id="user_type" name="user_type" required
+                    {% if viewed_user.id == request.user.id %}disabled{% endif %}>
+              <option value="admin" {% if viewed_user.user_type == 'admin' %}selected{% endif %}>Administrator</option>
+              <option value="device" {% if viewed_user.user_type == 'device' %}selected{% endif %}>User</option>
+            </select>
+            {% if viewed_user.id == request.user.id %}
+            <small class="text-muted">You cannot change your own user type</small>
+            {% endif %}
+          </div>
+
+          <!-- Account Status -->
+          <h6 class="border-bottom pb-2 mb-3 mt-4">Account Status</h6>
+          
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                     {% if viewed_user.is_active %}checked{% endif %}
+                     {% if viewed_user.id == request.user.id %}disabled{% endif %}>
+              <label class="form-check-label" for="is_active">
+                Active (User can log in)
+              </label>
+            </div>
+            {% if viewed_user.id == request.user.id %}
+            <small class="text-muted">You cannot deactivate your own account</small>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="is_verified" name="is_verified" 
+                     {% if viewed_user.is_verified %}checked{% endif %}>
+              <label class="form-check-label" for="is_verified">
+                Verified (Account is verified)
+              </label>
+            </div>
+          </div>
+
+          <!-- Account Information (Read-only) -->
+          <h6 class="border-bottom pb-2 mb-3 mt-4">Account Information</h6>
+          
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Date Joined</label>
+              <input type="text" class="form-control" value="{{ viewed_user.date_joined|date:'Y-m-d H:i' }}" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Last Login</label>
+              <input type="text" class="form-control" value="{{ viewed_user.last_login|date:'Y-m-d H:i'|default:'Never' }}" disabled>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Last Updated</label>
+              <input type="text" class="form-control" value="{{ viewed_user.updated_at|date:'Y-m-d H:i' }}" disabled>
+            </div>
+          </div>
+
+          <!-- Submit Buttons -->
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <a href="{% url 'dashboard:user_detail' viewed_user.id %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

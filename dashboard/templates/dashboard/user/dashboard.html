@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - ShieldDFL{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 slide-up">
+  <h2 class="text-gradient mb-0">
+    <i class="bi bi-speedometer2 me-2"></i>
+    User Dashboard
+  </h2>
+  <button onclick="location.reload()" class="btn btn-primary">
+    <i class="bi bi-arrow-clockwise me-2"></i> Refresh
+  </button>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mb-4">
+  <div class="col-md-3 mb-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1" style="font-size: 0.9rem; font-weight: 600;">Total Devices</p>
+          <h2 class="stat-number mb-0">{{ devices|length }}</h2>
+        </div>
+        <div class="icon-wrapper">
+          <i class="bi bi-laptop"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1" style="font-size: 0.9rem; font-weight: 600;">Active Devices</p>
+          <h2 class="stat-number mb-0">{{ devices|length }}</h2>
+        </div>
+        <div class="icon-wrapper" style="background: linear-gradient(135deg, #10b981, #059669);">
+          <i class="bi bi-check-circle"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1" style="font-size: 0.9rem; font-weight: 600;">FL Rounds</p>
+          <h2 class="stat-number mb-0">{% if latest_round %}{{ latest_round.round_number }}{% else %}0{% endif %}</h2>
+        </div>
+        <div class="icon-wrapper" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+          <i class="bi bi-arrow-repeat"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-3">
+    <div class="stat-card">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <p class="text-muted mb-1" style="font-size: 0.9rem; font-weight: 600;">Accuracy</p>
+          <h2 class="stat-number mb-0">{% if latest_round %}{{ latest_round.global_model_accuracy|floatformat:1 }}%{% else %}0%{% endif %}</h2>
+        </div>
+        <div class="icon-wrapper" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+          <i class="bi bi-graph-up"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content Row -->
+<div class="row">
+  <!-- Left Column -->
+  <div class="col-md-4">
+    <div class="card card-info mb-4">
+      <div class="card-header">
+        <i class="bi bi-laptop me-2"></i>
+        All Devices
+      </div>
+      <div class="card-body text-center">
+        <div class="stat-number mb-3">{{ devices|length }}</div>
+        <p class="text-muted mb-3">Total Registered Devices</p>
+        <a href="{% url 'accounts:device_list' %}" class="btn btn-primary w-100">
+          <i class="bi bi-arrow-right-circle me-2"></i>
+          Manage Devices
+        </a>
+      </div>
+    </div>
+    
+    <div class="card card-success mb-4">
+      <div class="card-header">
+        <i class="bi bi-bar-chart me-2"></i>
+        Latest FL Round
+      </div>
+      <div class="card-body">
+        {% if latest_round %}
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Round Number:</span>
+              <span class="badge bg-primary">{{ latest_round.round_number }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Status:</span>
+              <span class="badge bg-{% if latest_round.status == 'completed' %}success{% elif latest_round.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                {{ latest_round.status|title }}
+              </span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted">Global Accuracy:</span>
+              <strong class="text-gradient">{{ latest_round.global_model_accuracy }}%</strong>
+            </div>
+          </div>
+          <div class="progress" style="height: 10px;">
+            <div class="progress-bar" role="progressbar" style="width: {{ latest_round.global_model_accuracy }}%" aria-valuenow="{{ latest_round.global_model_accuracy }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        {% else %}
+          <p class="text-muted text-center mb-0">
+            <i class="bi bi-info-circle me-2"></i>
+            No FL rounds yet
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Column -->
+  <div class="col-md-8">
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-grid me-2"></i>
+        Devices Summary
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead>
+              <tr>
+                <th><i class="bi bi-laptop me-1"></i> Device</th>
+                <th><i class="bi bi-person me-1"></i> Owner</th>
+                <th><i class="bi bi-circle me-1"></i> Status</th>
+                <th><i class="bi bi-star me-1"></i> Reputation</th>
+                <th><i class="bi bi-shield me-1"></i> Malicious</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for d in devices %}
+              <tr>
+                <td><strong>{{ d.device_name }}</strong></td>
+                <td>{{ d.user.username }}</td>
+                <td>
+                  <span class="badge bg-{% if d.status == 'active' %}success{% elif d.status == 'blocked' %}danger{% else %}secondary{% endif %}">
+                    {{ d.status|title }}
+                  </span>
+                </td>
+                <td>
+                  <span class="badge bg-{% if d.latest_reputation >= 0.7 %}success{% elif d.latest_reputation >= 0.5 %}warning{% else %}danger{% endif %}">
+                    {{ d.latest_reputation|floatformat:3 }}
+                  </span>
+                </td>
+                <td>
+                  {% if d.is_malicious %}
+                    <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i> Yes</span>
+                  {% else %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> No</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                  <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                  <p class="mb-0 mt-2">No devices registered yet</p>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+          <i class="bi bi-clock-history me-2"></i>
+          Recent Model Updates
+        </span>
+        <span class="badge bg-light text-dark">{{ updates|length }} Total</span>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>Owner</th>
+                <th>Round</th>
+                <th>Accuracy</th>
+                <th>Loss</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for u in updates %}
+              <tr>
+                <td><strong>{{ u.device.device_name }}</strong></td>
+                <td>{{ u.device.user.username }}</td>
+                <td><span class="badge bg-info">R{{ u.fl_round.round_number }}</span></td>
+                <td>
+                  <span class="badge bg-success">{{ u.local_accuracy }}%</span>
+                </td>
+                <td>{{ u.local_loss|floatformat:4 }}</td>
+                <td>
+                  {% if u.is_malicious %}
+                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i> Malicious</span>
+                  {% else %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Clean</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                  <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.3;"></i>
+                  <p class="mb-0 mt-2">No model updates yet</p>
+                </td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Add pulse effect to stat cards on load
+document.addEventListener('DOMContentLoaded', function() {
+  const statCards = document.querySelectorAll('.stat-card');
+  statCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.style.transform = 'scale(1.05)';
+      setTimeout(() => {
+        card.style.transform = 'scale(1)';
+      }, 200);
+    }, index * 100);
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h4 class="mb-0">Confirm Device Deletion</h4>
+      </div>
+      <div class="card-body">
+        <p>Are you sure you want to delete device <strong>{{ device.device_name }}</strong>?</p>
+        <form method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+          <a href="{% url 'accounts:device_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

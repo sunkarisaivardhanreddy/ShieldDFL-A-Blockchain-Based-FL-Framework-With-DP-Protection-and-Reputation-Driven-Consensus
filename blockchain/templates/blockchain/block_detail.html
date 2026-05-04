@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<a href="{% url 'blockchain:overview' %}" class="btn btn-outline-secondary mb-3">&larr; Back</a>
+
+<h2 class="mb-4">Block #{{ block.index }}</h2>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <table class="table table-borderless">
+      <tr><td class="w-25"><strong>Hash:</strong></td><td><code>{{ block.hash }}</code></td></tr>
+      <tr><td><strong>Previous Hash:</strong></td><td><code>{{ block.previous_hash }}</code></td></tr>
+      <tr><td><strong>Merkle Root:</strong></td><td><code>{{ block.merkle_root }}</code></td></tr>
+      <tr><td><strong>Nonce:</strong></td><td>{{ block.nonce }}</td></tr>
+      <tr><td><strong>Miner:</strong></td><td>{{ block.miner_device.device_name|default:"N/A" }}</td></tr>
+      <tr><td><strong>Secure Device Proof:</strong></td><td>{% if secure_proof %}<code>{{ secure_proof }}</code>{% else %}N/A{% endif %}</td></tr>
+      <tr><td><strong>Timestamp:</strong></td><td>{{ block.timestamp|date:"Y-m-d H:i:s" }}</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header">
+    <h5 class="mb-0">Transactions ({{ transactions.count }})</h5>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm">
+      <thead><tr><th>Hash</th><th>Sender</th><th>Recipient</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for tx in transactions %}
+        <tr>
+          <td><code>{{ tx.tx_hash|slice:":12" }}...</code></td>
+          <td>{{ tx.sender|slice:":12" }}</td>
+          <td>{{ tx.recipient|slice:":12" }}</td>
+          <td>{{ tx.get_data.type|default:"N/A" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-muted text-center">No transactions</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

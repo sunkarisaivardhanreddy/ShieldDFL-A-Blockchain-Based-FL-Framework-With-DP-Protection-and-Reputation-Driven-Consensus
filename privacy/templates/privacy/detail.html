@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Privacy Budget - {{ device.device_name }}</h2>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-borderless w-auto">
+      <tr><td><strong>Query ε used:</strong></td><td>{{ budget.used_query_epsilon|floatformat:3 }} / {{ budget.total_query_epsilon }}</td></tr>
+      <tr><td><strong>Gradient ε used:</strong></td><td>{{ budget.used_gradient_epsilon|floatformat:3 }} / {{ budget.total_gradient_epsilon }}</td></tr>
+      <tr><td><strong>Delta:</strong></td><td>{{ budget.delta }}</td></tr>
+    </table>
+    <a href="{% url 'privacy:reset' device.device_id %}" class="btn btn-warning btn-sm" data-confirm="Reset budgets?">Reset Budgets</a>
+  </div>
+</div>
+{% endblock %}

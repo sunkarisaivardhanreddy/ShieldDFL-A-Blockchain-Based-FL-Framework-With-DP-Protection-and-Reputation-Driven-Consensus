@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Transactions</h2>
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-9">
+        <label for="deviceFilter" class="form-label">Device Filter</label>
+        <select id="deviceFilter" name="device_id" class="form-select">
+          <option value="">All devices</option>
+          {% for d in devices %}
+          <option value="{{ d.device_id }}" {% if selected_device_id == d.device_id|stringformat:"s" %}selected{% endif %}>{{ d.device_name }} [{{ d.status|title }}]</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-sm table-hover">
+      <thead><tr><th>Hash</th><th>Sender Device</th><th>Sender ID</th><th>Recipient</th><th>Type</th><th>Status</th><th>Time</th></tr></thead>
+      <tbody>
+        {% for tx in transactions %}
+        <tr>
+          <td><code>{{ tx.tx_hash|slice:":12" }}...</code></td>
+          <td>{{ tx.sender_device.device_name|default:"SYSTEM" }}</td>
+          <td>{{ tx.sender|slice:":16" }}</td>
+          <td>{{ tx.recipient|slice:":16" }}</td>
+          <td>{{ tx.get_data.type|default:"N/A" }}</td>
+          <td>{% if tx.block_id %}<span class="badge bg-success">Confirmed</span>{% else %}<span class="badge bg-warning">Pending</span>{% endif %}</td>
+          <td>{{ tx.timestamp|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted">No transactions</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+{% csrf_token %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h2 class="mb-1">Federated Learning Rounds</h2>
+    <small class="text-muted">Total: <strong>{{ total_rounds }}</strong> rounds</small>
+  </div>
+  <div>
+    {% if user.is_superuser or user.user_type == 'admin' %}
+    <button class="btn btn-outline-primary me-2" onclick="location.reload()">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+    <a href="{% url 'federated_learning:start_round' %}" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Start New Round
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+    <table class="table table-hover">
+      <thead>
+        <tr><th>Round #</th><th>Status</th><th>Participants</th><th>Global Acc</th><th>Global Loss</th><th>Started</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for r in rounds %}
+        <tr>
+          <td><strong>{{ r.round_number }}</strong></td>
+          <td>
+            <span class="badge bg-{% if r.status == 'completed' %}success{% elif r.status == 'in_progress' %}primary{% elif r.status == 'failed' %}danger{% else %}secondary{% endif %}">
+              {{ r.status|title }}
+            </span>
+          </td>
+          <td>{{ r.current_participants }} / {{ r.max_participants }}</td>
+          <td>{% if r.global_model_accuracy %}{{ r.global_model_accuracy|floatformat:2 }}%{% else %}-{% endif %}</td>
+          <td>{% if r.global_model_loss %}{{ r.global_model_loss|floatformat:4 }}{% else %}-{% endif %}</td>
+          <td>{{ r.started_at|date:"Y-m-d H:i"|default:"-" }}</td>
+          <td>
+            <a href="{% url 'federated_learning:round_detail' r.round_id %}" class="btn btn-sm btn-outline-primary">View</a>
+            {% if user.is_superuser or user.user_type == 'admin' %}
+              {% if r.status == 'pending' %}
+                <button class="btn btn-sm btn-outline-success" onclick="startRound('{{ r.round_id }}')">
+                  <i class="bi bi-play-circle"></i> Start
+                </button>
+              {% elif r.status == 'in_progress' %}
+                <a href="{% url 'federated_learning:simulate_round' r.round_id %}" class="btn btn-sm btn-outline-warning">
+                  <i class="bi bi-lightning"></i> Simulate
+                </a>
+                <a href="{% url 'federated_learning:aggregate_round' r.round_id %}" class="btn btn-sm btn-outline-success">
+                  <i class="bi bi-check-circle"></i> Complete
+                </a>
+              {% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">
+          <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.25;"></i>
+          <p class="mt-2 mb-0">No rounds yet. <a href="{% url 'federated_learning:start_round' %}">Start one</a></p>
+        </td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+  
+  <!-- Pagination Controls -->
+  {% if has_other_pages %}
+  <div class="card-footer bg-light">
+    <nav aria-label="Page navigation" class="mb-0">
+      <ul class="pagination justify-content-center mb-0">
+        <!-- First Page -->
+        {% if rounds.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page=1"><i class="bi bi-skip-backward"></i></a>
+        </li>
+        {% endif %}
+        
+        <!-- Previous -->
+        {% if rounds.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ rounds.previous_page_number }}">Previous</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Previous</span>
+        </li>
+        {% endif %}
+        
+        <!-- Page Numbers -->
+        {% for num in rounds.paginator.page_range %}
+          {% if rounds.number == num %}
+          <li class="page-item active">
+            <span class="page-link">{{ num }}<span class="visually-hidden">(current)</span></span>
+          </li>
+          {% elif num > rounds.number|add:'-3' and num < rounds.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+          </li>
+          {% endif %}
+        {% endfor %}
+        
+        <!-- Next -->
+        {% if rounds.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ rounds.next_page_number }}">Next</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+          <span class="page-link">Next</span>
+        </li>
+        {% endif %}
+        
+        <!-- Last Page -->
+        {% if rounds.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ rounds.paginator.num_pages }}"><i class="bi bi-skip-forward"></i></a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    <p class="text-center text-muted mb-0" style="font-size: 0.85rem;">
+      Showing <strong>{{ rounds.start_index }}</strong>-<strong>{{ rounds.end_index }}</strong> of <strong>{{ total_rounds }}</strong>
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="card shadow-sm mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Newly Registered Devices</h5>
+    <a href="{% url 'accounts:device_list' %}" class="btn btn-sm btn-outline-primary">Manage Devices</a>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr><th>Device</th><th>Owner</th><th>Status</th><th>Malicious</th><th>Registered</th></tr>
+      </thead>
+      <tbody>
+        {% for d in new_devices %}
+        <tr>
+          <td>{{ d.device_name }}</td>
+          <td>{{ d.user.username }}</td>
+          <td>
+            <span class="badge bg-{% if d.status == 'active' %}success{% elif d.status == 'blocked' %}danger{% else %}secondary{% endif %}">
+              {{ d.status|title }}
+            </span>
+          </td>
+          <td>
+            {% if d.is_malicious %}
+            <span class="badge bg-danger">Yes</span>
+            {% else %}
+            <span class="badge bg-success">No</span>
+            {% endif %}
+          </td>
+          <td>{{ d.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted">No newly registered devices</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function startRound(roundId) {
+  if (!confirm('Start this round? It will transition from Pending to In Progress.')) {
+    return;
+  }
+  
+  const statusUrl = `/federated-learning/api/rounds/${roundId}/status/`;
+  
+  fetch(statusUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+    },
+    body: JSON.stringify({ status: 'in_progress' })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(err => alert('Failed to start round: ' + err));
+}
+
+function completeRound(roundId) {
+  if (!confirm('Complete this round? It will run aggregation and update the global model.')) {
+    return;
+  }
+  
+  const statusUrl = `/federated-learning/api/rounds/${roundId}/status/`;
+  
+  fetch(statusUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
+    },
+    body: JSON.stringify({ status: 'completed' })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Error: ' + data.error);
+      }
+    })
+    .catch(err => alert('Failed to complete round: ' + err));
+}
+
+// Add CSRF token to all fetch requests
+document.addEventListener('DOMContentLoaded', function() {
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+  if (csrftoken && !window.fetch._hasCSRF) {
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+      if (!args[1]) args[1] = {};
+      if (!args[1].headers) args[1].headers = {};
+      if (args[0] && typeof args[0] === 'string' && !args[0].includes('http')) {
+        args[1].headers['X-CSRFToken'] = csrftoken;
+      }
+      return originalFetch.apply(this, args);
+    };
+    window.fetch._hasCSRF = true;
+  }
+});
+</script>
+{% endblock %}

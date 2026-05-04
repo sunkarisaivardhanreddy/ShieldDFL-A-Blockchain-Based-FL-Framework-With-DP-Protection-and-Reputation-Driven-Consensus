@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Reputation Detail - {{ device.device_name }}</h2>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header">
+        <h5 class="mb-0">Recent Scores</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead><tr><th>Score</th><th>Confidence</th><th>Round</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for s in scores %}
+            <tr>
+              <td>{{ s.score|floatformat:3 }}</td>
+              <td>{{ s.confidence|floatformat:3 }}</td>
+              <td>{{ s.round_number }}</td>
+              <td>{{ s.timestamp|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No scores</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card shadow-sm mb-3">
+      <div class="card-header">
+        <h5 class="mb-0">Reputation History</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead><tr><th>Event</th><th>ΔScore</th><th>Old → New</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for h in history %}
+            <tr>
+              <td>{{ h.event_type }}</td>
+              <td>{{ h.delta_score|floatformat:3 }}</td>
+              <td>{{ h.old_score|floatformat:3 }} → {{ h.new_score|floatformat:3 }}</td>
+              <td>{{ h.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No history</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

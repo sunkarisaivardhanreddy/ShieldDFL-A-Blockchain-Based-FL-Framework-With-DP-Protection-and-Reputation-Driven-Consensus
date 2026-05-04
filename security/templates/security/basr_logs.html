@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2 class="mb-4">BASR Attack Logs</h2>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-sm table-hover">
+      <thead><tr><th>Device</th><th>Round</th><th>Description</th><th>Time</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.device.device_name }}</td>
+          <td>{{ log.fl_round_number }}</td>
+          <td>{{ log.description }}</td>
+          <td>{{ log.created_at|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-center text-muted">No BASR attacks</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

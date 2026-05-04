@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">Privacy Budgets (All Devices)</h2>
+  <button onclick="location.reload()" class="btn btn-outline-primary btn-sm">Refresh</button>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover table-sm">
+      <thead>
+        <tr><th>Device</th><th>Owner</th><th>Query epsilon (used/total)</th><th>Gradient epsilon (used/total)</th><th>Delta</th></tr>
+      </thead>
+      <tbody id="privacyBudgetBody">
+        {% for b in budgets %}
+        <tr>
+          <td><a href="{% url 'privacy:device_detail' b.device.device_id %}">{{ b.device.device_name }}</a></td>
+          <td>{{ b.device.user.username }}</td>
+          <td>
+            {{ b.used_query_epsilon|floatformat:3 }} / {{ b.total_query_epsilon }}
+            <div class="progress mt-1" style="height: 4px;">
+              <div class="progress-bar" style="width: {% widthratio b.used_query_epsilon b.total_query_epsilon 100 %}%"></div>
+            </div>
+          </td>
+          <td>
+            {{ b.used_gradient_epsilon|floatformat:3 }} / {{ b.total_gradient_epsilon }}
+            <div class="progress mt-1" style="height: 4px;">
+              <div class="progress-bar bg-warning" style="width: {% widthratio b.used_gradient_epsilon b.total_gradient_epsilon 100 %}%"></div>
+            </div>
+          </td>
+          <td>{{ b.delta }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted">No privacy budgets yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  (function () {
+    const body = document.getElementById('privacyBudgetBody');
+    if (!body) return;
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    async function refreshBudgets() {
+      try {
+        const res = await fetch("{% url 'privacy:budgets_api' %}", { cache: 'no-store' });
+        const data = await res.json();
+        const rows = (data.budgets || []).map((b) => `
+          <tr>
+            <td><a href="/privacy/device/${encodeURIComponent(b.device_id)}/">${escapeHtml(b.device_name)}</a></td>
+            <td>${escapeHtml(b.owner)}</td>
+            <td>
+              ${escapeHtml(b.query_used)} / ${escapeHtml(b.query_total)}
+              <div class="progress mt-1" style="height: 4px;">
+                <div class="progress-bar" style="width: ${b.query_pct}%"></div>
+              </div>
+            </td>
+            <td>
+              ${escapeHtml(b.grad_used)} / ${escapeHtml(b.grad_total)}
+              <div class="progress mt-1" style="height: 4px;">
+                <div class="progress-bar bg-warning" style="width: ${b.grad_pct}%"></div>
+              </div>
+            </td>
+            <td>${escapeHtml(b.delta)}</td>
+          </tr>
+        `).join('');
+
+        body.innerHTML = rows || '<tr><td colspan="5" class="text-center text-muted">No privacy budgets yet</td></tr>';
+      } catch (e) {
+        // Preserve current table content on transient errors.
+      }
+    }
+
+    setInterval(refreshBudgets, 5000);
+  })();
+</script>
+{% endblock %}

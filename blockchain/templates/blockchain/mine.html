@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load blockchain_extras %}
+{% block content %}
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-success text-white">
+        <h4 class="mb-0">Mine New Block</h4>
+      </div>
+      <div class="card-body">
+        <p>Choose any device (active/offline/blocked) and mine based on your requirement.</p>
+        <form method="post" action="{% url 'blockchain:mine_all_devices' %}" class="mb-3">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'blockchain:mine_block' %}">
+          <button type="submit" class="btn btn-warning btn-sm">Mine Block For All Devices</button>
+        </form>
+        <form method="post" action="{% url 'blockchain:mine_random_device' %}" class="mb-3">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'blockchain:mine_block' %}">
+          <button type="submit" class="btn btn-dark btn-sm">Mine Random Device Block</button>
+        </form>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Select Miner Device</label>
+            <select name="device_id" id="minerDevice" class="form-select" required>
+              <option value="">Choose device...</option>
+              {% for d in devices %}
+              <option value="{{ d.device_id }}" data-pending="{{ device_tx_counts|get_item:d.device_id|default:0 }}">
+                {{ d.device_name }} [{{ d.status|title }}] (rep: {{ d.get_reputation_score|floatformat:2 }}, pending: {{ device_tx_counts|get_item:d.device_id|default:0 }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="deviceOnlyCheck" name="device_only">
+            <label class="form-check-label" for="deviceOnlyCheck">
+              <strong>Mine only this device's transactions</strong> (strict per-device mining)
+            </label>
+            <div class="form-text" id="deviceOnlyInfo">Select to include only transactions from the chosen device.</div>
+          </div>
+          <button type="submit" class="btn btn-success">Start Mining</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Create Manual Transaction</h4>
+      </div>
+      <div class="card-body">
+        <p>Create transaction per device with your own requirement, then mine it later.</p>
+        <form method="post" action="{% url 'blockchain:create_transaction' %}">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{% url 'blockchain:mine_block' %}">
+          <div class="mb-3">
+            <label class="form-label">Sender Device</label>
+            <select name="device_id" class="form-select" required>
+              <option value="">Choose device...</option>
+              {% for d in devices %}
+              <option value="{{ d.device_id }}">{{ d.device_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Type</label>
+            <select name="tx_type" class="form-select">
+              <option value="MODEL_UPDATE">MODEL_UPDATE</option>
+              <option value="SECURITY_EVENT">SECURITY_EVENT</option>
+              <option value="REPUTATION_UPDATE">REPUTATION_UPDATE</option>
+              <option value="PRIVACY_EVENT">PRIVACY_EVENT</option>
+              <option value="CUSTOM">CUSTOM</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Recipient</label>
+            <input type="text" name="recipient" class="form-control" value="FLNetwork">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Payload (optional)</label>
+            <textarea name="payload" class="form-control" rows="3" placeholder="Any custom metadata"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Create Transaction</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Pending Transactions</h5>
+    <a href="{% url 'blockchain:transaction_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-hover mb-0">
+      <thead>
+        <tr><th>TX Hash</th><th>Sender Device</th><th>Type</th><th>Status</th><th>Time</th></tr>
+      </thead>
+      <tbody>
+        {% for t in pending_transactions %}
+        <tr>
+          <td><code>{{ t.tx_hash|slice:":12" }}...</code></td>
+          <td>{{ t.sender_device.device_name|default:"N/A" }}</td>
+          <td>{{ t.get_data.type|default:"N/A" }}</td>
+          <td><span class="badge bg-warning">Pending</span></td>
+          <td>{{ t.timestamp|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted">No pending transactions</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

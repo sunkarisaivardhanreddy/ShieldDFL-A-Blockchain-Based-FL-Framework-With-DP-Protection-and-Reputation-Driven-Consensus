@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Security & Attack Detection</h2>
+
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card border-danger shadow-sm">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Recent Attack Logs</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Device</th><th>Type</th><th>Round</th><th>Time</th></tr></thead>
+          <tbody>
+            {% for a in attacks %}
+            <tr>
+              <td>{{ a.device.device_name }}</td>
+              <td><span class="badge bg-danger">{{ a.attack_type }}</span></td>
+              <td>{{ a.fl_round_number }}</td>
+              <td>{{ a.created_at|date:"H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No attacks detected</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-warning shadow-sm">
+      <div class="card-header bg-warning text-white">
+        <h5 class="mb-0">Anomaly Detection Results</h5>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm table-hover mb-0">
+          <thead><tr><th>Device</th><th>Round</th><th>Z-Score</th><th>Anomalous</th></tr></thead>
+          <tbody>
+            {% for anom in anomalies %}
+            <tr>
+              <td>{{ anom.device.device_name }}</td>
+              <td>{{ anom.fl_round_number }}</td>
+              <td>{{ anom.z_score|floatformat:2 }}</td>
+              <td>
+                {% if anom.is_anomalous %}
+                <span class="badge bg-warning">Yes</span>
+                {% else %}
+                <span class="badge bg-success">No</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted">No anomalies detected</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

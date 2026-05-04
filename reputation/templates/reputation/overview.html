@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Device Reputation Scores</h2>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <div class="alert alert-success py-2 mb-0"><strong>High Trust:</strong> {{ high_count }}</div>
+  </div>
+  <div class="col-md-4">
+    <div class="alert alert-warning py-2 mb-0"><strong>Medium Trust:</strong> {{ medium_count }}</div>
+  </div>
+  <div class="col-md-4">
+    <div class="alert alert-danger py-2 mb-0"><strong>Low Trust:</strong> {{ low_count }}</div>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover table-sm">
+      <thead>
+        <tr><th>Device</th><th>Owner</th><th>Status</th><th>Score</th><th>Level</th><th>Confidence</th><th>Round</th><th>Last Updated</th></tr>
+      </thead>
+      <tbody>
+        {% for row in score_rows %}
+        <tr>
+          <td><a href="{% url 'reputation:device_detail' row.device.device_id %}">{{ row.device.device_name }}</a></td>
+          <td>{{ row.device.user.username }}</td>
+          <td>
+            <span class="badge bg-{% if row.device.status == 'active' %}success{% elif row.device.status == 'blocked' %}danger{% else %}secondary{% endif %}">
+              {{ row.device.status|title }}
+            </span>
+          </td>
+          <td>
+            <span class="badge bg-{% if row.score >= 0.7 %}success{% elif row.score >= 0.5 %}warning{% else %}danger{% endif %}">
+              {{ row.score|floatformat:3 }}
+            </span>
+          </td>
+          <td>
+            {% if row.score >= 0.7 %}
+              <span class="text-success">High</span>
+            {% elif row.score >= 0.5 %}
+              <span class="text-warning">Medium</span>
+            {% else %}
+              <span class="text-danger">Low</span>
+            {% endif %}
+          </td>
+          <td>{{ row.confidence|floatformat:3 }}</td>
+          <td>{{ row.round_number }}</td>
+          <td>{{ row.timestamp|date:"Y-m-d H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted">No reputation scores yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

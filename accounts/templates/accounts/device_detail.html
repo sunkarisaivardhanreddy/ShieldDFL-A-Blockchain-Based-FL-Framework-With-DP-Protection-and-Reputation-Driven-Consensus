@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>{{ device.device_name }}</h2>
+  <a href="{% url 'accounts:device_list' %}" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="row">
+  <div class="col-md-4">
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Device Information</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-borderless">
+          <tr><td class="w-25"><strong>ID:</strong></td><td><code>{{ device.device_id }}</code></td></tr>
+          <tr><td><strong>MAC:</strong></td><td><code>{{ device.mac_address }}</code></td></tr>
+          <tr><td><strong>Type:</strong></td><td>{{ device.get_device_type_display }}</td></tr>
+          <tr><td><strong>Status:</strong></td>
+            <td><span class="badge bg-{% if device.status == 'active' %}success{% elif device.status == 'blocked' %}danger{% else %}secondary{% endif %}">
+              {{ device.status|title }}
+            </span></td>
+          </tr>
+          <tr><td><strong>IP:</strong></td><td>{{ device.ip_address|default:"N/A" }}</td></tr>
+          <tr><td><strong>Reputation:</strong></td>
+            <td>
+              <span class="badge bg-{% if reputation_score >= 0.7 %}success{% elif reputation_score >= 0.5 %}warning{% else %}danger{% endif %}">
+                {{ reputation_score|floatformat:2 }}
+              </span>
+            </td>
+          </tr>
+          <tr><td><strong>Created:</strong></td><td>{{ device.created_at|date:"Y-m-d H:i" }}</td></tr>
+        </table>
+      </div>
+      <div class="card-footer">
+        <a href="{% url 'accounts:device_delete' device.device_id %}" class="btn btn-outline-danger btn-sm" data-confirm="Delete this device?">
+          Delete Device
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-8">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Metrics</h5>
+        <small class="text-white">(Auto-refresh every 5s)</small>
+      </div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead>
+            <tr><th>Time</th><th>CPU %</th><th>Memory %</th><th>Latency (ms)</th><th>Battery %</th><th>Uptime (s)</th></tr>
+          </thead>
+          <tbody id="metricsTableBody">
+            {% if metrics %}
+            {% for m in metrics %}
+            <tr>
+              <td>{{ m.timestamp|date:"H:i:s" }}</td>
+              <td>{{ m.cpu_usage|floatformat:1 }}</td>
+              <td>{{ m.memory_usage|floatformat:1 }}</td>
+              <td>{{ m.network_latency|floatformat:2 }}</td>
+              <td>{{ m.battery_level|floatformat:1 }}</td>
+              <td>{{ m.uptime }}</td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted">No metrics recorded yet.</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Auto-refresh metrics every 5 seconds
+function refreshMetrics() {
+  const deviceId = '{{ device.device_id }}';
+  const metricsUrl = `/accounts/devices/${deviceId}/metrics/`;
+  
+  fetch(metricsUrl)
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('metricsTableBody');
+      
+      if (data.metrics.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No metrics recorded yet.</td></tr>';
+        return;
+      }
+      
+      let html = '';
+      for (const m of data.metrics) {
+        html += `<tr>
+          <td>${m.timestamp}</td>
+          <td>${m.cpu_usage.toFixed(1)}</td>
+          <td>${m.memory_usage.toFixed(1)}</td>
+          <td>${m.network_latency.toFixed(2)}</td>
+          <td>${m.battery_level.toFixed(1)}</td>
+          <td>${m.uptime}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    })
+    .catch(error => console.error('Error refreshing metrics:', error));
+}
+
+// Set up auto-refresh
+setInterval(refreshMetrics, 5000);
+</script>
+{% endblock %}

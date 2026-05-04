@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Blockchain Statistics</h2>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-borderless w-auto">
+      <tr><td><strong>Total Blocks:</strong></td><td>{{ stats.total_blocks }}</td></tr>
+      <tr><td><strong>Total Transactions:</strong></td><td>{{ stats.total_transactions }}</td></tr>
+      <tr><td><strong>Average Block Time (s):</strong></td><td>{{ stats.avg_block_time|floatformat:2 }}</td></tr>
+      <tr><td><strong>Chain Valid:</strong></td><td>{{ stats.chain_valid }}</td></tr>
+    </table>
+  </div>
+</div>
+{% endblock %}

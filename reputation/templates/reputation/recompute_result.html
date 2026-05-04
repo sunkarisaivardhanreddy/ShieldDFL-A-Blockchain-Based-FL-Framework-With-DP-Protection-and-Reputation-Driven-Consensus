@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h2 class="mb-4">Recompute Reputation - {{ device.device_name }}</h2>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <p>New reputation score: <strong>{{ reputation.score|floatformat:3 }}</strong></p>
+    <p>Confidence: {{ reputation.confidence|floatformat:3 }}</p>
+    <a href="{% url 'reputation:device_detail' device.device_id %}" class="btn btn-primary">Back to Detail</a>
+  </div>
+</div>
+{% endblock %}

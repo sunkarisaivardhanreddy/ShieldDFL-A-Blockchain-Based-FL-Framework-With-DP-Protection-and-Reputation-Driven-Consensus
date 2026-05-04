@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load blockchain_extras %}
+{% block content %}
+<h2 class="mb-4">Blocks</h2>
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-9">
+        <label for="deviceFilter" class="form-label">Miner Device Filter</label>
+        <select id="deviceFilter" name="device_id" class="form-select">
+          <option value="">All devices</option>
+          {% for d in devices %}
+          <option value="{{ d.device_id }}" {% if selected_device_id == d.device_id|stringformat:"s" %}selected{% endif %}>{{ d.device_name }} [{{ d.status|title }}]</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <button type="submit" class="btn btn-primary w-100">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="card shadow-sm">
+  <div class="card-body">
+    <table class="table table-hover table-sm">
+      <thead><tr><th>Index</th><th>Hash</th><th>Secure Device Proof</th><th>Previous</th><th>Miner Device</th><th>TX Count</th><th>Time</th><th></th></tr></thead>
+      <tbody>
+        {% for b in blocks %}
+        <tr>
+          <td>#{{ b.index }}</td>
+          <td><code>{{ b.hash|slice:":12" }}...</code></td>
+          <td>
+            {% with proof=block_secure_proofs|get_item:b.id %}
+              {% if proof %}
+                <code>{{ proof|slice:":12" }}...</code>
+              {% else %}
+                <span class="text-muted">N/A</span>
+              {% endif %}
+            {% endwith %}
+          </td>
+          <td><code>{{ b.previous_hash|slice:":12" }}...</code></td>
+          <td>{{ b.miner_device.device_name|default:"N/A" }}</td>
+          <td>{{ b.transactions.count }}</td>
+          <td>{{ b.timestamp|date:"Y-m-d H:i" }}</td>
+          <td><a href="{% url 'blockchain:block_detail' b.index %}" class="btn btn-sm btn-outline-secondary">View</a></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted">No blocks</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
